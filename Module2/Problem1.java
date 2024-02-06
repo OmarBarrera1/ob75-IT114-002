@@ -1,4 +1,4 @@
-
+package Module2;
 import java.util.Arrays;
 
 public class Problem1 {
@@ -19,7 +19,17 @@ public class Problem1 {
         System.out.println("Odds output:");
         //hint: use the arr variable; don't diretly use the a1-a4 variables
         //TODO add/edit code here
-        
+
+        //ob75 - Febraury 5, 2024.
+
+        for(int i = 0; i < arr.length; i++)
+            {
+                if(arr[i] % 2 != 0)
+                {
+                    System.out.print(arr[i] + ", ");
+                }
+            }
+
         //end add/edit section
         System.out.println();
         System.out.println("End process");
