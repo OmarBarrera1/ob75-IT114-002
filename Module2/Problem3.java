@@ -1,3 +1,4 @@
+package Module2;
 import java.util.Arrays;
 
 public class Problem3 {
@@ -19,7 +20,26 @@ public class Problem3 {
         //your code should set the indexes of this array
         Object[] output = new Object[arr.length];
         //hint: use the arr variable; don't diretly use the a1-a4 variables
+
         //TODO convert each value to positive
+
+        //ob75 - February 6, 2024
+        for(int i = 0; i < arr.length; i++){
+            if(arr[i] instanceof Integer){
+               output[i] = Math.abs((Integer) arr[i]);
+            }
+            else if(arr[i] instanceof Double){
+               output[i] = Math.abs((Double) arr[i]);
+            }
+            else if(arr[i] instanceof String){
+               Integer intermediate = Math.abs(Integer.parseInt((String) arr[i]));
+               output[i] = Integer.toString(intermediate);
+            }
+        }
+         
+         
+
+
         //set the result to the proper index of the output array
         //hint: don't forget to handle the data types properly, the result datatype should be the same as the original datatype
         
