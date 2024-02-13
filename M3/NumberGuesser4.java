@@ -111,7 +111,7 @@ public class NumberGuesser4 {
         // TODO add other conditions here
         return processed;
     }
-
+    
     private void lose() {
         System.out.println("Uh oh, looks like you need to get some more practice.");
         System.out.println("The correct number was " + number);
@@ -137,7 +137,17 @@ public class NumberGuesser4 {
                 lose();
                 pickNewRandom = true;
             }
+        //ob75 - Febraury 7, 2024
+            else {
+                if(guess < number){
+                    System.out.println("Hint: Number is Higher");
+                }
+                else if(guess > number){
+                    System.out.println("Hint: Number is Lower");
+                }
+            }
         }
+        saveState();
     }
 
     private int strToNum(String message) {
@@ -156,6 +166,23 @@ public class NumberGuesser4 {
         try (Scanner input = new Scanner(System.in);) {
             System.out.println("Welcome to NumberGuesser4.0");
             System.out.println("To exit, type the word 'quit'.");
+            System.out.println("Choose a Difficutly: Easy(10 Strikes), Medium(5 Strikes), Hard(3 Strikes)");
+
+        //ob75 - Febraury 7,2024
+            String difficulty = input.nextLine();
+
+            if(difficulty.equalsIgnoreCase("Easy")) {
+                System.out.println("You are now in Easy Mode");
+                maxStrikes = 10;
+            }
+            else if(difficulty.equalsIgnoreCase("Medium")) {
+                System.out.println("You are now in Medium Mode");
+                maxStrikes = 5;
+            }
+            else if (difficulty.equalsIgnoreCase("Hard")) {
+                System.out.println("You are now in Hard Mode");
+                maxStrikes = 3;
+            }
             loadState();
             do {
                 if (pickNewRandom) {
