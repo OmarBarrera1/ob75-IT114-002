@@ -1,4 +1,4 @@
-package M4.Part3;
+package M4.Part3HW;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -47,7 +47,6 @@ public class ServerThread extends Thread {
         }
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void run() {
         info("Thread starting");
