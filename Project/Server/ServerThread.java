@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -11,9 +12,11 @@ import Project.Common.ConnectionPayload;
 import Project.Common.Constants;
 import Project.Common.Payload;
 import Project.Common.PayloadType;
+import Project.Common.PrivateMPayload;
 import Project.Common.RollPayload;
 import Project.Common.RoomResultsPayload;
 import Project.Common.TextFX;
+import Project.Common.Mute_UnmutePayload;
 import Project.Common.TextFX.Color;
 
 /**
@@ -30,6 +33,9 @@ public class ServerThread extends Thread {
     private Room currentRoom;
     private Logger logger = Logger.getLogger(ServerThread.class.getName());
 
+    // UCID - ob75 - April 13, 2024
+    private List<String> isMutedClients = new ArrayList<String>();
+
     private void info(String message) {
         logger.info(String.format("Thread[%s]: %s", getClientName(), message));
     }
@@ -42,6 +48,7 @@ public class ServerThread extends Thread {
 
     }
 
+
     protected void setClientId(long id) {
         clientId = id;
         if (id == Constants.DEFAULT_CLIENT_ID) {
@@ -53,6 +60,7 @@ public class ServerThread extends Thread {
     protected boolean isRunning() {
         return isRunning;
     }
+
     protected void setClientName(String name) {
         if (name == null || name.isBlank()) {
             logger.severe("Invalid client name being set");
@@ -105,6 +113,7 @@ public class ServerThread extends Thread {
         cp.setClientName(clientName);
         return send(cp);
     }
+
     private boolean sendListRooms(List<String> potentialRooms) {
         RoomResultsPayload rp = new RoomResultsPayload();
         rp.setRooms(potentialRooms);
@@ -123,6 +132,31 @@ public class ServerThread extends Thread {
         p.setClientId(from);
         p.setMessage(message);
         return send(p);
+    }
+
+    public void addMute(String clientMuteName) {
+
+        if (!isMutedClients.contains(clientMuteName))
+        {
+            isMutedClients.add(clientMuteName);
+        }
+      
+    }
+
+    public void removeMute(String clientUnmuteName) {
+        if (isMutedClients.contains(clientUnmuteName))
+        {
+            isMutedClients.remove(clientUnmuteName);
+        }
+    }
+
+    public boolean checkMutedList(String clientMuteName){
+        if (isMutedClients.contains(clientMuteName)){
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     /**
@@ -237,7 +271,7 @@ public class ServerThread extends Thread {
                 this.sendListRooms(potentialRooms);
                 break;
 
-                //UCID - ob75 - March 30, 2024
+            // UCID - ob75 - March 30, 2024
             case ROLL:
                 try {
                     RollPayload rp = (RollPayload) p;
@@ -247,14 +281,44 @@ public class ServerThread extends Thread {
                 }
                 break;
 
-                //UCID - ob75 - March 31, 2024
+            // UCID - ob75 - March 31, 2024
             case FLIP:
-                try{
+                try {
                     (currentRoom).setFlip(this);
-                }catch (Exception e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
                 break;
+
+            // UCID - ob75 - April 10, 2024
+            case PM:
+                try {
+                    PrivateMPayload pm = (PrivateMPayload) p;
+                    (currentRoom).setPrivateM(this, pm.getClientName(), pm.getMessage());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+
+            // UCID - ob75 - April 13, 2024
+            case MUTE:
+            try {
+                Mute_UnmutePayload mp = (Mute_UnmutePayload) p;
+                (currentRoom).setMute(this, mp.getClientMuteName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            break;
+            
+            // UCID - ob75 - Aprl 13, 2024
+            case UNMUTE:
+            try {
+                Mute_UnmutePayload mp = (Mute_UnmutePayload) p;
+                (currentRoom).setUnmute(this, mp.getClientUnmuteName());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            break;
 
             default:
                 break;

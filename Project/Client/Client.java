@@ -13,8 +13,11 @@ import java.util.logging.Logger;
 
 import Project.Common.ConnectionPayload;
 import Project.Common.Constants;
+import Project.Common.Mute_UnmutePayload;
+
 import Project.Common.Payload;
 import Project.Common.PayloadType;
+import Project.Common.PrivateMPayload;
 import Project.Common.RollPayload;
 import Project.Common.RoomResultsPayload;
 import Project.Common.TextFX;
@@ -44,10 +47,16 @@ public enum Client {
 
     private static final String FLIP = "/flip";
 
+    // UCID - ob75 - April 13, 2024
+    private static final String MUTE = "/mute";
+    private static final String UNMUTE = "/unmute";
+
     // client id, is the key, client name is the value
     private ConcurrentHashMap<Long, String> clientsInRoom = new ConcurrentHashMap<Long, String>();
     private long myClientId = Constants.DEFAULT_CLIENT_ID;
     private Logger logger = Logger.getLogger(Client.class.getName());
+
+    private static IClientEvents events;
 
     public boolean isConnected() {
         if (server == null) {
@@ -69,6 +78,27 @@ public enum Client {
      * @return true if connection was successful
      */
     private boolean connect(String address, int port) {
+        try {
+            server = new Socket(address, port);
+            // channel to send to server
+            out = new ObjectOutputStream(server.getOutputStream());
+            // channel to listen to server
+            in = new ObjectInputStream(server.getInputStream());
+            logger.info("Client connected");
+            listenForServerMessage();
+            sendConnect();
+        } catch (UnknownHostException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return isConnected();
+    }
+
+    public boolean connect(String address, int port, String username, IClientEvents callback) {
+        clientName = username;
+        Client.events = callback;
+
         try {
             server = new Socket(address, port);
             // channel to send to server
@@ -223,19 +253,20 @@ public enum Client {
 
             return true;
         }
-        
-            // UCID - ob75 - March 30, 2024
-         else if (text.startsWith(FLIP)) {
+
+        // UCID - ob75 - March 30, 2024
+        else if (text.startsWith(FLIP)) {
             try {
                 sendFlip();
 
             } catch (Exception e) {
                 e.printStackTrace();
+
             }
             return true;
+
         }
         return false;
-
     }
 
     // Send methods
@@ -253,27 +284,27 @@ public enum Client {
         out.writeObject(fp);
     }
 
-    private void sendDisconnect() throws IOException {
+    void sendDisconnect() throws IOException {
         ConnectionPayload cp = new ConnectionPayload();
         cp.setPayloadType(PayloadType.DISCONNECT);
         out.writeObject(cp);
     }
 
-    private void sendCreateRoom(String roomName) throws IOException {
+    public void sendCreateRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.CREATE_ROOM);
         p.setMessage(roomName);
         out.writeObject(p);
     }
 
-    private void sendJoinRoom(String roomName) throws IOException {
+    public void sendJoinRoom(String roomName) throws IOException {
         Payload p = new Payload();
         p.setPayloadType(PayloadType.JOIN_ROOM);
         p.setMessage(roomName);
         out.writeObject(p);
     }
 
-    private void sendListRooms(String searchString) throws IOException {
+    public void sendListRooms(String searchString) throws IOException {
         // Updated after video to use RoomResultsPayload so we can (later) use a limit
         // value
         RoomResultsPayload p = new RoomResultsPayload();
@@ -289,13 +320,90 @@ public enum Client {
         out.writeObject(p);
     }
 
-    private void sendMessage(String message) throws IOException {
+    public void sendMessage(String message) throws IOException {
+
+        // UCID - ob75 - April 9,2024
+        if (message.startsWith("/") && processClientCommand(message)) {
+            return;
+
+            // UCID - ob75 - April 9,2024
+        } else if (message.startsWith("@")) {
+            String privateMessage = message.replace("@", "").trim();
+            if (privateMessage.contains(" ")) {
+                String[] vals1 = privateMessage.split(" ", 2);
+                if (vals1.length >= 2) {
+                    try {
+                        String clientName = vals1[0];
+                        sendPrivateM(clientName, message);
+
+                    } catch (IOException e) {
+                        System.out.println(TextFX.colorize("Socket error", Color.RED));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return;
+        }
+        // UCID - ob75 - April 13, 2024
+        else if (message.startsWith(MUTE)) {
+            String clientMuteName = message.replace(MUTE, "").trim();
+
+            try {
+                sendMute(clientMuteName);
+            } catch (IOException e) {
+                System.out.println(TextFX.colorize("Socket error", Color.RED));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        // UCID - ob75 - April 13, 2024
+        else if (message.startsWith(UNMUTE)) {
+            String clientUnmuteName = message.replace(UNMUTE, "").trim();
+
+            try {
+                sendUnmute(clientUnmuteName);
+
+            } catch (IOException e) {
+                System.out.println(TextFX.colorize("Socket error", Color.RED));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
         Payload p = new Payload();
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         // no need to send an identifier, because the server knows who we are
         // p.setClientName(clientName);
         out.writeObject(p);
+    }
+
+    // UCID - ob75 - April 10, 2024
+    public void sendPrivateM(String clientName, String message) throws IOException {
+        PrivateMPayload pm = new PrivateMPayload(clientName, message);
+        pm.setPayloadType(PayloadType.PM);
+        pm.setMessage(message);
+        out.writeObject(pm);
+    }
+
+    // UCID - ob75 - April 13, 2024
+    public void sendMute(String clientMuteName) throws IOException {
+        Mute_UnmutePayload m = new Mute_UnmutePayload();
+        m.setPayloadType(PayloadType.MUTE);
+        m.setClientMuteName(clientMuteName);
+        out.writeObject(m);
+    }
+
+    // UCID - ob75 - April 13, 2024
+    public void sendUnmute(String clientUnmuteName) throws IOException {
+        Mute_UnmutePayload um = new Mute_UnmutePayload();
+        um.setPayloadType(PayloadType.UNMUTE);
+        um.setClientUnmuteName(clientUnmuteName);
+        out.writeObject(um);
     }
 
     // end send methods
@@ -381,7 +489,7 @@ public enum Client {
         }
     }
 
-    private String getClientNameFromId(long id) {
+    protected String getClientNameFromId(long id) {
         if (clientsInRoom.containsKey(id)) {
             return clientsInRoom.get(id);
         }
@@ -407,6 +515,7 @@ public enum Client {
                 } else {
                     logger.info(TextFX.colorize("Setting client id to default", Color.RED));
                 }
+                events.onReceiveClientId(p.getClientId());
                 break;
             case CONNECT:// for now connect,disconnect are all the same
             case DISCONNECT:
@@ -419,20 +528,30 @@ public enum Client {
                 ConnectionPayload cp2 = (ConnectionPayload) p;
                 if (cp2.getPayloadType() == PayloadType.CONNECT || cp2.getPayloadType() == PayloadType.SYNC_CLIENT) {
                     addClientReference(cp2.getClientId(), cp2.getClientName());
+
                 } else if (cp2.getPayloadType() == PayloadType.DISCONNECT) {
                     removeClientReference(cp2.getClientId());
+                }
+
+                if (cp2.getPayloadType() == PayloadType.CONNECT) {
+                    events.onClientConnect(p.getClientId(), cp2.getClientName(), p.getMessage());
+                } else if (cp2.getPayloadType() == PayloadType.DISCONNECT) {
+                    events.onClientDisconnect(p.getClientId(), cp2.getClientName(), p.getMessage());
+                } else if (cp2.getPayloadType() == PayloadType.SYNC_CLIENT) {
+                    events.onSyncClient(p.getClientId(), cp2.getClientName());
                 }
 
                 break;
             case JOIN_ROOM:
                 clientsInRoom.clear();// we changed a room so likely need to clear the list
+                events.onResetUserList();
                 break;
             case MESSAGE:
-
                 message = TextFX.colorize(String.format("%s: %s",
                         getClientNameFromId(p.getClientId()),
                         p.getMessage()), Color.BLUE);
                 System.out.println(message);
+                events.onMessageReceive(p.getClientId(), p.getMessage());
                 break;
             case LIST_ROOMS:
                 try {
@@ -449,6 +568,8 @@ public enum Client {
                         String msg = String.format("%s %s", (i + 1), rooms.get(i));
                         System.out.println(TextFX.colorize(msg, Color.CYAN));
                     }
+                    events.onReceiveRoomList(rp.getRooms(), rp.getMessage());
+
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
