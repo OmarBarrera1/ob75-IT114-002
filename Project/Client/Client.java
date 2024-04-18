@@ -13,8 +13,11 @@ import java.util.logging.Logger;
 
 import Project.Common.ConnectionPayload;
 import Project.Common.Constants;
+import Project.Common.Mute_UnmutePayload;
+
 import Project.Common.Payload;
 import Project.Common.PayloadType;
+import Project.Common.PrivateMPayload;
 import Project.Common.RollPayload;
 import Project.Common.RoomResultsPayload;
 import Project.Common.TextFX;
@@ -43,6 +46,10 @@ public enum Client {
     private static final String ROLL = "/roll";
 
     private static final String FLIP = "/flip";
+
+    // UCID - ob75 - April 13, 2024
+    private static final String MUTE = "/mute";
+    private static final String UNMUTE = "/unmute";
 
     // client id, is the key, client name is the value
     private ConcurrentHashMap<Long, String> clientsInRoom = new ConcurrentHashMap<Long, String>();
@@ -254,11 +261,12 @@ public enum Client {
 
             } catch (Exception e) {
                 e.printStackTrace();
+
             }
             return true;
+
         }
         return false;
-
     }
 
     // Send methods
@@ -313,12 +321,89 @@ public enum Client {
     }
 
     public void sendMessage(String message) throws IOException {
+
+        // UCID - ob75 - April 9,2024
+        if (message.startsWith("/") && processClientCommand(message)) {
+            return;
+
+            // UCID - ob75 - April 9,2024
+        } else if (message.startsWith("@")) {
+            String privateMessage = message.replace("@", "").trim();
+            if (privateMessage.contains(" ")) {
+                String[] vals1 = privateMessage.split(" ", 2);
+                if (vals1.length >= 2) {
+                    try {
+                        String clientName = vals1[0];
+                        sendPrivateM(clientName, message);
+
+                    } catch (IOException e) {
+                        System.out.println(TextFX.colorize("Socket error", Color.RED));
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            return;
+        }
+        // UCID - ob75 - April 13, 2024
+        else if (message.startsWith(MUTE)) {
+            String clientMuteName = message.replace(MUTE, "").trim();
+
+            try {
+                sendMute(clientMuteName);
+            } catch (IOException e) {
+                System.out.println(TextFX.colorize("Socket error", Color.RED));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        // UCID - ob75 - April 13, 2024
+        else if (message.startsWith(UNMUTE)) {
+            String clientUnmuteName = message.replace(UNMUTE, "").trim();
+
+            try {
+                sendUnmute(clientUnmuteName);
+
+            } catch (IOException e) {
+                System.out.println(TextFX.colorize("Socket error", Color.RED));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
         Payload p = new Payload();
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
         // no need to send an identifier, because the server knows who we are
         // p.setClientName(clientName);
         out.writeObject(p);
+    }
+
+    // UCID - ob75 - April 10, 2024
+    public void sendPrivateM(String clientName, String message) throws IOException {
+        PrivateMPayload pm = new PrivateMPayload(clientName, message);
+        pm.setPayloadType(PayloadType.PM);
+        pm.setMessage(message);
+        out.writeObject(pm);
+    }
+
+    // UCID - ob75 - April 13, 2024
+    public void sendMute(String clientMuteName) throws IOException {
+        Mute_UnmutePayload m = new Mute_UnmutePayload();
+        m.setPayloadType(PayloadType.MUTE);
+        m.setClientMuteName(clientMuteName);
+        out.writeObject(m);
+    }
+
+    // UCID - ob75 - April 13, 2024
+    public void sendUnmute(String clientUnmuteName) throws IOException {
+        Mute_UnmutePayload um = new Mute_UnmutePayload();
+        um.setPayloadType(PayloadType.UNMUTE);
+        um.setClientUnmuteName(clientUnmuteName);
+        out.writeObject(um);
     }
 
     // end send methods

@@ -158,7 +158,6 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
     @Override
     public void onClientConnect(long clientId, String clientName, String message) {
         if (currentCard.ordinal() >= CardView.CHAT.ordinal()) {
-
             chatPanel.addUserListItem(clientId, String.format("%s (%s)", clientName, clientId));
             chatPanel.addText(String.format("*%s %s*", clientName, message));
 

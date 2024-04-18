@@ -8,7 +8,6 @@ import java.util.logging.Logger;
 
 import Project.Common.Constants;
 
-
 public class Room implements AutoCloseable {
     // protected static Server server;// used to refer to accessible server
     // functions
@@ -23,8 +22,6 @@ public class Room implements AutoCloseable {
     // private final static String DISCONNECT = "disconnect";
     // private final static String LOGOUT = "logout";
     // private final static String LOGOFF = "logoff";
-
-
 
     private Logger logger = Logger.getLogger(Room.class.getName());
 
@@ -56,40 +53,75 @@ public class Room implements AutoCloseable {
             syncClientList(client);
         }
 
-
     }
-    
 
-    //UCID - ob75 - March 30, 2024
-    public void setRoll(ServerThread client, int dice, int sides)
-    {
+    // UCID - ob75 - March 30, 2024
+    public void setRoll(ServerThread client, int dice, int sides) {
         Random rand = new Random();
 
-        if (dice > 0){
-            int result = dice + rand.nextInt((sides*dice) - dice);
-            sendMessage(client, String.format("Rolled a %sd%s die and got %s" , dice, sides, result));
-                
-        }
-        else{
-            int result = (int)(sides*Math.random()+1);
+        if (dice > 0) {
+            int result = dice + rand.nextInt((sides * dice) - dice);
+            sendMessage(client, String.format("Rolled a %sd%s die and got %s", dice, sides, result));
+
+        } else {
+            int result = (int) (sides * Math.random() + 1);
             sendMessage(client, String.format("Rolled a %s sided die and got %s", sides, result));
         }
 
     }
 
+    // UCID - ob75 - March 31, 2024
+    public void setFlip(ServerThread client) {
+        if (Math.random() < 0.5) {
+            sendMessage(client, "Flipped a coin: tails");
 
-    //UCID - ob75 - March 31, 2024
-    public void setFlip(ServerThread client)
-        {
-            if (Math.random() < 0.5) {
-                sendMessage(client, "Flipped a coin: tails");
+        } else {
+            sendMessage(client, "Flipped a coin: heads");
+        }
+    }
+
+    // UCID - ob75 - April 10, 2024
+    public void setPrivateM(ServerThread client, String clientName, String message) {
+        Iterator<ServerThread> iter = clients.iterator();
+        while (iter.hasNext()) {
+            ServerThread st = iter.next();
+            if (client != null && client.checkMutedList(st.getClientName()) == false
+                    && (st.checkMutedList(client.getClientName()) == false)) {
+                if (st.getClientName().equalsIgnoreCase(clientName)) {
+                    st.sendMessage(client.getClientId(), message);
+
+                }
+            }
+                
+            }client.sendMessage(client.getClientId(), message);
+        }
     
-            } else {
-                sendMessage(client, "Flipped a coin: heads");
+
+    // UCID - ob75 - April 13, 2024
+    public void setMute(ServerThread client, String clientMuteName) {
+        client.sendMessage(client.getClientId(), String.format("/mute %s", clientMuteName)); 
+        Iterator<ServerThread> muteIter = clients.iterator();
+        while (muteIter.hasNext()) {
+            ServerThread mClients = muteIter.next();
+            if (mClients.getClientName().equalsIgnoreCase(clientMuteName)) {
+                client.addMute(clientMuteName);
+                
             }
         }
-        
-   
+    }
+
+    // UCID - ob75 - April 13, 2024
+    public void setUnmute(ServerThread client, String clientUnmuteName) {
+        client.sendMessage(client.getClientId(), String.format("/unmute %s", clientUnmuteName)); 
+        Iterator<ServerThread> muteIter = clients.iterator();
+        while (muteIter.hasNext()) {
+            ServerThread umClients = muteIter.next();
+            if (umClients.getClientName().equalsIgnoreCase(clientUnmuteName)) {
+                client.removeMute(clientUnmuteName);
+               
+            }
+        }
+    }
 
     protected synchronized void removeClient(ServerThread client) {
         if (!isRunning) {
@@ -174,6 +206,7 @@ public class Room implements AutoCloseable {
             }
         }
     }
+
     protected static void createRoom(String roomName, ServerThread client) {
         if (Server.INSTANCE.createNewRoom(roomName)) {
             // server.joinRoom(roomName, client);
@@ -218,53 +251,53 @@ public class Room implements AutoCloseable {
             return;
         }
 
-        //UCID - ob75 - March 27, 2024
-        if (message.contains("<!") && message.contains("!>"))
-        {
+        // UCID - ob75 - March 27, 2024
+        if (message.contains("<!") && message.contains("!>")) {
             message = message.replace("<!", "<b>");
             message = message.replace("!>", "</b>");
         }
 
-        if (message.contains("<@") && message.contains("@>"))
-        {
+        if (message.contains("<@") && message.contains("@>")) {
             message = message.replace("<@", "<i>");
             message = message.replace("@>", "</i>");
         }
 
-        if (message.contains("<#") && message.contains("#>"))
-        {
+        if (message.contains("<#") && message.contains("#>")) {
             message = message.replace("<#", "<u>");
             message = message.replace("#>", "</u>");
         }
-
-        if (message.contains("<%") && message.contains("%>"))
-        {
-            message = message.replace("<%", "<R>");
-            message = message.replace("%>", "</R>");
+    
+        //UCID - ob75 - April 16, 2024
+        if (message.contains("<%") && message.contains("%>")) {
+            message = message.replace("<%", "<FONT COLOR=red>");
+            message = message.replace("%>", "</FONT COLOR=red>");
         }
 
-        if (message.contains("<*") && message.contains("*>"))
-        {
-            message = message.replace("<*", "<G>");
-            message = message.replace("*>", "</G>");
+        if (message.contains("<*") && message.contains("*>")) {
+            message = message.replace("<*", "<FONT COLOR=green>");
+            message = message.replace("*>", "</FONT COLOR=green>");
         }
 
-        if (message.contains("<&") && message.contains("&>"))
-        {
-            message = message.replace("<&", "<B>");
-            message = message.replace("&>", "</B>");
+        if (message.contains("<&") && message.contains("&>")) {
+            message = message.replace("<&", "<FONT COLOR=blue>");
+            message = message.replace("&>", "</FONT COLOR=blue>");
         }
-
-
 
         /// String from = (sender == null ? "Room" : sender.getClientName());
         long from = (sender == null) ? Constants.DEFAULT_CLIENT_ID : sender.getClientId();
         Iterator<ServerThread> iter = clients.iterator();
         while (iter.hasNext()) {
             ServerThread client = iter.next();
-            boolean messageSent = client.sendMessage(from, message);
-            if (!messageSent) {
-                handleDisconnect(iter, client);
+
+            // UCID - ob75 - April 13, 2024
+            if (sender != null && sender.checkMutedList(client.getClientName()) == false
+                    && (client.checkMutedList(sender.getClientName()) == false)) {
+                boolean messageSent = client.sendMessage(from, message);
+
+                if (!messageSent) {
+                    handleDisconnect(iter, client);
+
+                }
             }
         }
     }

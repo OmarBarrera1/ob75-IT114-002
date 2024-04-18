@@ -6,7 +6,9 @@
 ./Common/PayloadType.java
 ./Common/RoomResultsPayload.java
 ./Common/TextFX.java
+./Common/PrivateMPayload.java
 ./Common/RollPayload.java
+./Common/Mute_UnmutePayload.java
 ./Common/Constants.java
 ./Client/Client.java
 ./Client/IClientEvents.java
