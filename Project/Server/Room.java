@@ -105,7 +105,8 @@ public class Room implements AutoCloseable {
             ServerThread mClients = muteIter.next();
             if (mClients.getClientName().equalsIgnoreCase(clientMuteName)) {
                 client.addMute(clientMuteName);
-                
+                client.sendMessage(client.getClientId(), String.format(" You muted %s", clientMuteName));
+                mClients.sendMessage(client.getClientId(), String.format(" %s muted you", client.getClientName()));
             }
         }
     }

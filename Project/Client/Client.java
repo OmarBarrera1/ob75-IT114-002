@@ -51,6 +51,7 @@ public enum Client {
     private static final String MUTE = "/mute";
     private static final String UNMUTE = "/unmute";
 
+
     // client id, is the key, client name is the value
     private ConcurrentHashMap<Long, String> clientsInRoom = new ConcurrentHashMap<Long, String>();
     private long myClientId = Constants.DEFAULT_CLIENT_ID;
@@ -372,8 +373,9 @@ public enum Client {
                 e.printStackTrace();
             }
             return;
-        }
+        } 
 
+        
         Payload p = new Payload();
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
