@@ -101,7 +101,7 @@ public class ChatPanel extends JPanel {
                 e1.printStackTrace();
             }
         });
-        
+
         //UCID - ob75 - April 18, 2024
         exportButton.addActionListener((event) -> {
             try {
@@ -175,6 +175,10 @@ public class ChatPanel extends JPanel {
     public void clearUserList() {
         userListPanel.clearUserList();
     }
+    //UCID - ob75 - April 22, 2024
+    public void highlightLastMessage(long clientId) {
+        userListPanel.highlightLastMessage(clientId);
+    }
 
     public void addText(String text) {
         JPanel content = chatArea;
@@ -211,9 +215,9 @@ public class ChatPanel extends JPanel {
             }
             
         }try {
-            Date date = new Date() ;
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
-            FileWriter exportedWriter = new FileWriter(dateFormat.format(date) + ".txt");
+            Date currentDate = new Date() ;
+            SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
+            FileWriter exportedWriter = new FileWriter(dateFormater.format(currentDate) + ".txt");
             exportedWriter.write(exportText.toString());
             exportedWriter.close();
             

@@ -103,10 +103,14 @@ public class Room implements AutoCloseable {
         Iterator<ServerThread> muteIter = clients.iterator();
         while (muteIter.hasNext()) {
             ServerThread mClients = muteIter.next();
+            //UCID - ob75 - April 20, 2024
             if (mClients.getClientName().equalsIgnoreCase(clientMuteName)) {
-                client.addMute(clientMuteName);
+                if(client.checkMutedList(mClients.getClientName()) == false){
                 client.sendMessage(client.getClientId(), String.format(" You muted %s", clientMuteName));
                 mClients.sendMessage(client.getClientId(), String.format(" %s muted you", client.getClientName()));
+                    }
+                client.addMute(clientMuteName);
+                
             }
         }
     }
@@ -118,6 +122,11 @@ public class Room implements AutoCloseable {
         while (muteIter.hasNext()) {
             ServerThread umClients = muteIter.next();
             if (umClients.getClientName().equalsIgnoreCase(clientUnmuteName)) {
+                //UCID - ob75 - April 20, 2024
+                if(client.checkMutedList(umClients.getClientName()) == true){
+                    client.sendMessage(client.getClientId(), String.format(" You unmuted %s", clientUnmuteName));
+                    umClients.sendMessage(client.getClientId(), String.format(" %s unmuted you", client.getClientName()));
+                        }
                 client.removeMute(clientUnmuteName);
                
             }
