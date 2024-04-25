@@ -9,12 +9,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.swing.BoxLayout;
-import javax.swing.JEditorPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ScrollPaneConstants;
 
-import Project.Client.ClientUtils;
 
 public class UserListPanel extends JPanel {
     private JPanel userListArea;
@@ -100,5 +98,16 @@ public class UserListPanel extends JPanel {
             }
         }
     }
-   
+    //UCID - ob75 - April 24, 2024
+    protected void colorClients(long clientId, boolean isMuted){
+        if (isMuted == true){
+        Component[] cs = userListArea.getComponents();
+        for (Component c : cs) {
+            if (c instanceof UserListItem) {
+                UserListItem uli = (UserListItem) c;
+                uli.setClientColor(clientId, isMuted);
+            }
+        }
+    } 
+}
 }

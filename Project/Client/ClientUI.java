@@ -187,6 +187,15 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
             chatPanel.highlightLastMessage(clientId);
         }
     }
+    //UCID - ob75 - April 24, 2024 
+    public void onReceiveMute(long clientId){
+        chatPanel.colorClients(clientId, true);
+    }
+
+    //UCID - ob75 - April 24, 2024
+    public void onReceiveUnmute(long clientId){
+        chatPanel.colorClients(clientId, false);
+    }
 
     @Override
     public void onReceiveClientId(long id) {

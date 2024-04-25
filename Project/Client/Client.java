@@ -51,7 +51,6 @@ public enum Client {
     private static final String MUTE = "/mute";
     private static final String UNMUTE = "/unmute";
 
-
     // client id, is the key, client name is the value
     private ConcurrentHashMap<Long, String> clientsInRoom = new ConcurrentHashMap<Long, String>();
     private long myClientId = Constants.DEFAULT_CLIENT_ID;
@@ -373,9 +372,8 @@ public enum Client {
                 e.printStackTrace();
             }
             return;
-        } 
+        }
 
-        
         Payload p = new Payload();
         p.setPayloadType(PayloadType.MESSAGE);
         p.setMessage(message);
@@ -576,6 +574,30 @@ public enum Client {
                     e.printStackTrace();
                 }
                 break;
+
+            // UCID - ob75 - April 24, 2024
+            case MUTE:
+            System.out.println("This is the client ID " + p.getClientId());
+                try {
+                    events.onReceiveMute(p.getClientId());
+                   
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                
+                break;
+
+            // UCID - ob75 - April 24, 2024
+            case UNMUTE:
+            System.out.println("This is the client ID " + p.getClientId());
+                try {
+                events.onReceiveUnmute(p.getClientId());
+                
+                } catch (Exception e) {
+                e.printStackTrace();
+                }
+                break;
+                
             default:
                 break;
 

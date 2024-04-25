@@ -134,6 +134,7 @@ public class ServerThread extends Thread {
         return send(p);
     }
 
+    //UCID - ob75 - April 13, 2024
     public void addMute(String clientMuteName) {
 
         if (!isMutedClients.contains(clientMuteName))
@@ -142,7 +143,7 @@ public class ServerThread extends Thread {
         }
       
     }
-
+    //UCID - ob75 - April 13, 2024
     public void removeMute(String clientUnmuteName) {
         if (isMutedClients.contains(clientUnmuteName))
         {
@@ -150,6 +151,7 @@ public class ServerThread extends Thread {
         }
     }
 
+    //UCID - ob75 - April 13, 2024
     public boolean checkMutedList(String clientMuteName){
         if (isMutedClients.contains(clientMuteName)){
             return true;
@@ -158,6 +160,23 @@ public class ServerThread extends Thread {
             return false;
         }
     }
+
+    //UCID - ob75 - April 24, 2024
+    public void sendMuteClient(long clientId) throws IOException {
+        Payload mu = new Payload();
+        mu.setClientId(clientId);
+        mu.setPayloadType(PayloadType.MUTE);
+        out.writeObject(mu);
+    }
+
+    //UCID - ob75 - April 24, 2024
+    public void sendUnmuteClient(long clientId) throws IOException {
+        Payload um = new Payload();
+        um.setClientId(clientId);
+        um.setPayloadType(PayloadType.UNMUTE);
+        out.writeObject(um);
+    }
+
 
     /**
      * Used to associate client names and their ids from the server perspective

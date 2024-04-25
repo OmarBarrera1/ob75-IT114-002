@@ -180,6 +180,12 @@ public class ChatPanel extends JPanel {
         userListPanel.highlightLastMessage(clientId);
     }
 
+    //UCID - ob75 - April 24, 2024
+    public void colorClients(long clientId, boolean isMuted) {
+        userListPanel.colorClients(clientId, isMuted);
+    }
+
+
     public void addText(String text) {
         JPanel content = chatArea;
         // add message
@@ -215,9 +221,9 @@ public class ChatPanel extends JPanel {
             }
             
         }try {
-            Date currentDate = new Date() ;
-            SimpleDateFormat dateFormater = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
-            FileWriter exportedWriter = new FileWriter(dateFormater.format(currentDate) + ".txt");
+            Date Date = new Date() ;
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
+            FileWriter exportedWriter = new FileWriter(dateFormat.format(Date) + ".txt");
             exportedWriter.write(exportText.toString());
             exportedWriter.close();
             
