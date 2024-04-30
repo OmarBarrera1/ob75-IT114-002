@@ -8,7 +8,6 @@ import java.util.Random;
 import java.util.logging.Logger;
 
 import Project.Common.Constants;
-import Project.Common.Payload;
 
 public class Room implements AutoCloseable {
     // protected static Server server;// used to refer to accessible server
@@ -53,7 +52,40 @@ public class Room implements AutoCloseable {
             // connect status second
             sendConnectionStatus(client, true);
             syncClientList(client);
+
+            // UCID - ob75 - April 29, 2024
+            Iterator<ServerThread> iter = clients.iterator();
+            while (iter.hasNext()) {
+                ServerThread user = iter.next();
+                System.out.println(user.getClientName() + " and " + client.getClientName());
+                if (user.checkMutedList(client.getClientName())) {
+                    try {
+                        user.sendMuteClient(client.getClientId());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            try {
+                client.loadClientMuteFile();
+            } catch (IOException e) {
+                
+                e.printStackTrace();
+            }
         }
+    }
+
+    // UCID - ob75 - April 29, 2024
+    protected long getClientIdFromName(String clientName) {
+        Iterator<ServerThread> iter = clients.iterator();
+        while (iter.hasNext()) {
+            ServerThread client = iter.next();
+            if (client.getClientName().equals(clientName)) {
+                return client.getClientId();
+            }
+
+        }
+        return Constants.DEFAULT_CLIENT_ID;
 
     }
 
@@ -105,9 +137,9 @@ public class Room implements AutoCloseable {
         Iterator<ServerThread> muteIter = clients.iterator();
         while (muteIter.hasNext()) {
             ServerThread mClients = muteIter.next();
-            // UCID - ob75 - April 20, 2024
             if (mClients.getClientName().equalsIgnoreCase(clientMuteName)) {
                 if (client.checkMutedList(mClients.getClientName()) == false) {
+                    // UCID - ob75 - April 20, 2024
                     client.sendMessage(client.getClientId(), String.format(" You muted %s", clientMuteName));
                     mClients.sendMessage(client.getClientId(), String.format(" %s muted you", client.getClientName()));
                     client.addMute(clientMuteName);
@@ -132,10 +164,11 @@ public class Room implements AutoCloseable {
         while (muteIter.hasNext()) {
             ServerThread umClients = muteIter.next();
             if (umClients.getClientName().equalsIgnoreCase(clientUnmuteName)) {
-                // UCID - ob75 - April 20, 2024
                 if (client.checkMutedList(umClients.getClientName()) == true) {
+                    // UCID - ob75 - April 20, 2024
                     client.sendMessage(client.getClientId(), String.format(" You unmuted %s", clientUnmuteName));
-                    umClients.sendMessage(client.getClientId(), String.format(" %s unmuted you", client.getClientName()));
+                    umClients.sendMessage(client.getClientId(),
+                            String.format(" %s unmuted you", client.getClientName()));
                     client.removeMute(clientUnmuteName);
                     // UCID - ob75 - April 24, 2024
                     try {

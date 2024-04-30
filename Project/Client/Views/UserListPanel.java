@@ -100,7 +100,6 @@ public class UserListPanel extends JPanel {
     }
     //UCID - ob75 - April 24, 2024
     protected void colorClients(long clientId, boolean isMuted){
-        if (isMuted == true){
         Component[] cs = userListArea.getComponents();
         for (Component c : cs) {
             if (c instanceof UserListItem) {
@@ -109,5 +108,4 @@ public class UserListPanel extends JPanel {
             }
         }
     } 
-}
 }
