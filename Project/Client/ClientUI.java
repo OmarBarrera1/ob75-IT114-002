@@ -183,7 +183,18 @@ public class ClientUI extends JFrame implements IClientEvents, ICardControls {
         if (currentCard.ordinal() >= CardView.CHAT.ordinal()) {
             String clientName = Client.INSTANCE.getClientNameFromId(clientId);
             chatPanel.addText(String.format("%s: %s", clientName, message));
+        //UCID - ob75 - April 22, 2024
+            chatPanel.highlightLastMessage(clientId);
         }
+    }
+    //UCID - ob75 - April 24, 2024 
+    public void onReceiveMute(long clientId){
+        chatPanel.colorClients(clientId, true);
+    }
+
+    //UCID - ob75 - April 24, 2024
+    public void onReceiveUnmute(long clientId){
+        chatPanel.colorClients(clientId, false);
     }
 
     @Override

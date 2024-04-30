@@ -1,11 +1,15 @@
 package Project.Server;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.logging.Logger;
 
 import Project.Common.ConnectionPayload;
@@ -48,7 +52,6 @@ public class ServerThread extends Thread {
 
     }
 
-
     protected void setClientId(long id) {
         clientId = id;
         if (id == Constants.DEFAULT_CLIENT_ID) {
@@ -66,7 +69,13 @@ public class ServerThread extends Thread {
             logger.severe("Invalid client name being set");
             return;
         }
-        clientName = name;
+        clientName = name; 
+        //UCID - ob75 - April 29, 2024
+        try {
+            loadClientMuteFile();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     protected String getClientName() {
@@ -134,29 +143,85 @@ public class ServerThread extends Thread {
         return send(p);
     }
 
+    // UCID - ob75 - April 13, 2024
     public void addMute(String clientMuteName) {
-
-        if (!isMutedClients.contains(clientMuteName))
-        {
+        clientMuteName = clientMuteName.trim();
+        if (!isMutedClients.contains(clientMuteName)) {
             isMutedClients.add(clientMuteName);
         }
-      
+        // UCID - ob75 - April 29, 2024
+        saveClientMuteFile();
     }
 
+    // UCID - ob75 - April 13, 2024
     public void removeMute(String clientUnmuteName) {
-        if (isMutedClients.contains(clientUnmuteName))
-        {
+        clientUnmuteName = clientUnmuteName.trim();
+        if (isMutedClients.contains(clientUnmuteName)) {
             isMutedClients.remove(clientUnmuteName);
         }
+        // UCID - ob75 - April 29, 2024
+        saveClientMuteFile();
     }
 
-    public boolean checkMutedList(String clientMuteName){
-        if (isMutedClients.contains(clientMuteName)){
+    // UCID - ob75 - April 13, 2024
+    public boolean checkMutedList(String clientMuteName) {
+        if (isMutedClients.contains(clientMuteName)) {
             return true;
-        }
-        else {
+        } else {
             return false;
         }
+    }
+
+    // UCID - ob75 - April 29, 2024
+    public void saveClientMuteFile() {
+        try {
+            FileWriter clientMuteFile = new FileWriter(getClientName() + ".txt");
+            clientMuteFile.write(String.join(",", isMutedClients));   
+            clientMuteFile.close();
+            System.out.println("Sucessfully wrote to file " + clientMuteFile);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    // UCID - ob75 - April 29, 2024
+    public void loadClientMuteFile() throws IOException {
+        File file = new File(getClientName() + ".txt");
+        if (client.isConnected()) {
+            if (file.exists()) {
+                try (Scanner reader = new Scanner(file)) {
+                    reader.hasNextLine();
+                        String users = reader.nextLine();
+                            String[] mutedUsers = users.split(",");
+                            for(int i = 0; i < mutedUsers.length; i++){
+                                addMute(mutedUsers[i]);
+                                sendMuteClient(currentRoom.getClientIdFromName(mutedUsers[i]));
+                                System.out.println("adding muted user to list" + mutedUsers[i]);
+                            }
+                } catch (FileNotFoundException e) {
+                    e.printStackTrace();
+                } catch (Exception e2) {
+                    e2.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // UCID - ob75 - April 24, 2024
+    public void sendMuteClient(long clientId) throws IOException {
+        Payload mu = new Payload();
+        mu.setClientId(clientId);
+        mu.setPayloadType(PayloadType.MUTE);
+        out.writeObject(mu);
+    }
+
+    // UCID - ob75 - April 24, 2024
+    public void sendUnmuteClient(long clientId) throws IOException {
+        Payload um = new Payload();
+        um.setClientId(clientId);
+        um.setPayloadType(PayloadType.UNMUTE);
+        out.writeObject(um);
     }
 
     /**
@@ -302,23 +367,23 @@ public class ServerThread extends Thread {
 
             // UCID - ob75 - April 13, 2024
             case MUTE:
-            try {
-                Mute_UnmutePayload mp = (Mute_UnmutePayload) p;
-                (currentRoom).setMute(this, mp.getClientMuteName());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            break;
-            
+                try {
+                    Mute_UnmutePayload mp = (Mute_UnmutePayload) p;
+                    (currentRoom).setMute(this, mp.getClientMuteName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
+
             // UCID - ob75 - Aprl 13, 2024
             case UNMUTE:
-            try {
-                Mute_UnmutePayload mp = (Mute_UnmutePayload) p;
-                (currentRoom).setUnmute(this, mp.getClientUnmuteName());
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            break;
+                try {
+                    Mute_UnmutePayload mp = (Mute_UnmutePayload) p;
+                    (currentRoom).setUnmute(this, mp.getClientUnmuteName());
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                break;
 
             default:
                 break;
@@ -339,5 +404,10 @@ public class ServerThread extends Thread {
 
     public long getClientId() {
         return clientId;
+    }
+
+    public boolean contains(String clientName2) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'contains'");
     }
 }

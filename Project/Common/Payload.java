@@ -6,6 +6,10 @@ public class Payload implements Serializable {
 
     private long clientId;
 
+    public Payload() {
+        //TODO Auto-generated constructor stub
+    }
+
     public long getClientId() {
         return clientId;
     }

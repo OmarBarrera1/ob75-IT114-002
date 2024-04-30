@@ -1,5 +1,6 @@
 package Project.Server;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -51,7 +52,40 @@ public class Room implements AutoCloseable {
             // connect status second
             sendConnectionStatus(client, true);
             syncClientList(client);
+
+            // UCID - ob75 - April 29, 2024
+            Iterator<ServerThread> iter = clients.iterator();
+            while (iter.hasNext()) {
+                ServerThread user = iter.next();
+                System.out.println(user.getClientName() + " and " + client.getClientName());
+                if (user.checkMutedList(client.getClientName())) {
+                    try {
+                        user.sendMuteClient(client.getClientId());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+            try {
+                client.loadClientMuteFile();
+            } catch (IOException e) {
+                
+                e.printStackTrace();
+            }
         }
+    }
+
+    // UCID - ob75 - April 29, 2024
+    protected long getClientIdFromName(String clientName) {
+        Iterator<ServerThread> iter = clients.iterator();
+        while (iter.hasNext()) {
+            ServerThread client = iter.next();
+            if (client.getClientName().equals(clientName)) {
+                return client.getClientId();
+            }
+
+        }
+        return Constants.DEFAULT_CLIENT_ID;
 
     }
 
@@ -92,35 +126,62 @@ public class Room implements AutoCloseable {
 
                 }
             }
-                
-            }client.sendMessage(client.getClientId(), message);
+
         }
-    
+        client.sendMessage(client.getClientId(), message);
+    }
 
     // UCID - ob75 - April 13, 2024
     public void setMute(ServerThread client, String clientMuteName) {
-        client.sendMessage(client.getClientId(), String.format("/mute %s", clientMuteName)); 
+        client.sendMessage(client.getClientId(), String.format("/mute %s", clientMuteName));
         Iterator<ServerThread> muteIter = clients.iterator();
         while (muteIter.hasNext()) {
             ServerThread mClients = muteIter.next();
             if (mClients.getClientName().equalsIgnoreCase(clientMuteName)) {
-                client.addMute(clientMuteName);
-                
+                if (client.checkMutedList(mClients.getClientName()) == false) {
+                    // UCID - ob75 - April 20, 2024
+                    client.sendMessage(client.getClientId(), String.format(" You muted %s", clientMuteName));
+                    mClients.sendMessage(client.getClientId(), String.format(" %s muted you", client.getClientName()));
+                    client.addMute(clientMuteName);
+                    // UCID - ob75 - April 24, 2024
+                    try {
+                        client.sendMuteClient(mClients.getClientId());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                }
+
             }
+
         }
     }
 
     // UCID - ob75 - April 13, 2024
     public void setUnmute(ServerThread client, String clientUnmuteName) {
-        client.sendMessage(client.getClientId(), String.format("/unmute %s", clientUnmuteName)); 
+        client.sendMessage(client.getClientId(), String.format("/unmute %s", clientUnmuteName));
         Iterator<ServerThread> muteIter = clients.iterator();
         while (muteIter.hasNext()) {
             ServerThread umClients = muteIter.next();
             if (umClients.getClientName().equalsIgnoreCase(clientUnmuteName)) {
-                client.removeMute(clientUnmuteName);
-               
+                if (client.checkMutedList(umClients.getClientName()) == true) {
+                    // UCID - ob75 - April 20, 2024
+                    client.sendMessage(client.getClientId(), String.format(" You unmuted %s", clientUnmuteName));
+                    umClients.sendMessage(client.getClientId(),
+                            String.format(" %s unmuted you", client.getClientName()));
+                    client.removeMute(clientUnmuteName);
+                    // UCID - ob75 - April 24, 2024
+                    try {
+                        client.sendUnmuteClient(umClients.getClientId());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
+
         }
+
     }
 
     protected synchronized void removeClient(ServerThread client) {
@@ -266,8 +327,8 @@ public class Room implements AutoCloseable {
             message = message.replace("<#", "<u>");
             message = message.replace("#>", "</u>");
         }
-    
-        //UCID - ob75 - April 16, 2024
+
+        // UCID - ob75 - April 16, 2024
         if (message.contains("<%") && message.contains("%>")) {
             message = message.replace("<%", "<FONT COLOR=red>");
             message = message.replace("%>", "</FONT COLOR=red>");

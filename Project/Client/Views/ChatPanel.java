@@ -9,7 +9,10 @@ import java.awt.event.ContainerEvent;
 import java.awt.event.ContainerListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -56,6 +59,9 @@ public class ChatPanel extends JPanel {
         input.add(textValue);
         JButton button = new JButton("Send");
 
+        //UCID - ob75 - April 18, 2024
+        JButton exportButton = new JButton("Export");
+
         // lets us submit with the enter key instead of just the button click
         textValue.addKeyListener(new KeyListener() {
 
@@ -91,12 +97,27 @@ public class ChatPanel extends JPanel {
                 }
             } catch (NullPointerException e) {
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
+                
                 e1.printStackTrace();
+            }
+        });
+
+        //UCID - ob75 - April 18, 2024
+        exportButton.addActionListener((event) -> {
+            try {
+                extractText();
+
+                
+            } catch (NullPointerException e) {
+                e.printStackTrace();
             }
         });
         chatArea = content;
         input.add(button);
+        
+        //UCID - ob75 - April 18, 2024
+        input.add(exportButton);
+
         userListPanel = new UserListPanel();
         this.add(userListPanel, BorderLayout.EAST);
         this.add(input, BorderLayout.SOUTH);
@@ -129,7 +150,7 @@ public class ChatPanel extends JPanel {
                 // rough concepts for handling resize
                 // set the dimensions based on the frame size
                 Dimension frameSize = wrapper.getParent().getParent().getSize();
-                int w = (int) Math.ceil(frameSize.getWidth() * .3f);
+                int w = (int) Math.ceil(frameSize.getWidth() * .4f);
 
                 userListPanel.setPreferredSize(new Dimension(w, (int) frameSize.getHeight()));
                 userListPanel.revalidate();
@@ -154,12 +175,22 @@ public class ChatPanel extends JPanel {
     public void clearUserList() {
         userListPanel.clearUserList();
     }
+    //UCID - ob75 - April 22, 2024
+    public void highlightLastMessage(long clientId) {
+        userListPanel.highlightLastMessage(clientId);
+    }
+
+    //UCID - ob75 - April 24, 2024
+    public void colorClients(long clientId, boolean isMuted) {
+        userListPanel.colorClients(clientId, isMuted);
+    }
+
 
     public void addText(String text) {
         JPanel content = chatArea;
         // add message
 
-        //UCID - ob75 - April 16, 2024
+        // UCID - ob75 - April 16, 2024
         JEditorPane textContainer = new JEditorPane("text/html", text);
 
         // sizes the panel to attempt to take up the width of the container
@@ -170,10 +201,35 @@ public class ChatPanel extends JPanel {
         textContainer.setMaximumSize(textContainer.getPreferredSize());
         textContainer.setEditable(false);
         ClientUtils.clearBackground(textContainer);
+
         // add to container and tell the layout to revalidate
         content.add(textContainer);
         // scroll down on new message
         JScrollBar vertical = ((JScrollPane) chatArea.getParent().getParent()).getVerticalScrollBar();
         vertical.setValue(vertical.getMaximum());
+    }
+
+    // UCID - ob75 - April 18, 2024
+    public void extractText() {
+        StringBuilder exportText = new StringBuilder();
+        Component[] cs = chatArea.getComponents();
+        for (Component textContain : cs) {
+            if (textContain instanceof JEditorPane) {
+                JEditorPane jText = (JEditorPane) textContain;
+                String text = jText.getText();
+                exportText.append(text);
+            }
+            
+        }try {
+            Date Date = new Date() ;
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH-mm-ss") ;
+            FileWriter exportedWriter = new FileWriter(dateFormat.format(Date) + ".txt");
+            exportedWriter.write(exportText.toString());
+            exportedWriter.close();
+            
+          } catch (IOException e) {
+            System.out.println("An error occurred.");
+            e.printStackTrace();
+          }
     }
 }

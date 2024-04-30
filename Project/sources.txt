@@ -16,6 +16,7 @@
 ./Client/ICardControls.java
 ./Client/CardView.java
 ./Client/ClientUI.java
+./Client/Views/UserListItem.java
 ./Client/Views/Menu.java
 ./Client/Views/ChatPanel.java
 ./Client/Views/UserDetailsPanel.java

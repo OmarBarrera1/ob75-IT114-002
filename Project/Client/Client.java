@@ -574,6 +574,30 @@ public enum Client {
                     e.printStackTrace();
                 }
                 break;
+
+            // UCID - ob75 - April 24, 2024
+            case MUTE:
+            System.out.println("This is the client ID " + p.getClientId());
+                try {
+                    events.onReceiveMute(p.getClientId());
+                   
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                
+                break;
+
+            // UCID - ob75 - April 24, 2024
+            case UNMUTE:
+            System.out.println("This is the Unmuted client ID " + p.getClientId());
+                try {
+                events.onReceiveUnmute(p.getClientId());
+                
+                } catch (Exception e) {
+                e.printStackTrace();
+                }
+                break;
+                
             default:
                 break;
 

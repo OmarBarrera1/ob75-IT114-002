@@ -64,4 +64,9 @@ public interface IClientEvents {
      */
     void onRoomJoin(String roomName);
 
+    //UCID - ob75 - April 24, 2024
+    void onReceiveMute(long clientId);
+    
+    //UCID - ob75 - April 24, 2024
+    void onReceiveUnmute(long clientId);
 }
